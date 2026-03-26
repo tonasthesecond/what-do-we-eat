@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>what do we eat</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #100e09;
+        --surface: #1a1710;
+        --border: #2c281a;
+        --text: #e8dfc8;
+        --muted: #6b6248;
+        --food: #e8973a;
+        --place: #7ac4a8;
+        --exclude: #c45a3a;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "DM Mono", monospace;
+        min-height: 100vh;
+        padding: 2.5rem 1.2rem 5rem;
+      }
+
+      .wrap {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      /* ── Header ── */
+      h1 {
+        font-family: "Playfair Display", serif;
+        font-weight: 700;
+        font-size: clamp(2.4rem, 8vw, 3.8rem);
+        line-height: 0.95;
+        color: var(--food);
+        margin-bottom: 0.3rem;
+      }
+      h1 em {
+        font-style: italic;
+        font-weight: 400;
+        color: var(--text);
+      }
+
+      header {
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      /* ── Setup banner ── */
+      .banner {
+        margin-top: 1rem;
+        padding: 0.8rem 1rem;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        line-height: 1.7;
+        background: color-mix(in srgb, var(--exclude) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--exclude) 35%, transparent);
+        color: color-mix(in srgb, var(--exclude) 80%, var(--text));
+      }
+      .banner code {
+        background: rgba(255, 255, 255, 0.08);
+        padding: 0.1em 0.35em;
+        border-radius: 3px;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      /* ── Mode toggle ── */
+      .mode-toggle {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .mode-btn {
+        font-family: "DM Mono", monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.55em 1.4em;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .mode-btn:hover {
+        border-color: var(--text);
+        color: var(--text);
+      }
+      .mode-btn.active[data-mode="food"] {
+        background: color-mix(in srgb, var(--food) 15%, transparent);
+        border-color: var(--food);
+        color: var(--food);
+      }
+      .mode-btn.active[data-mode="place"] {
+        background: color-mix(in srgb, var(--place) 15%, transparent);
+        border-color: var(--place);
+        color: var(--place);
+      }
+
+      /* ── Tags ── */
+      .section-label {
+        font-size: 0.62rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.7rem;
+      }
+
+      #tag-area {
+        margin-bottom: 1.8rem;
+      }
+
+      #tag-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        min-height: 2rem;
+      }
+
+      .tag-btn {
+        font-family: "DM Mono", monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.35em 0.85em;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.12s;
+        user-select: none;
+      }
+      .tag-btn:hover {
+        border-color: var(--text);
+        color: var(--text);
+      }
+      .tag-btn.include {
+        background: color-mix(in srgb, var(--place) 15%, transparent);
+        border-color: var(--place);
+        color: var(--place);
+      }
+      .tag-btn.exclude {
+        background: color-mix(in srgb, var(--exclude) 12%, transparent);
+        border-color: var(--exclude);
+        color: var(--exclude);
+        text-decoration: line-through;
+      }
+
+      /* ── Roll button ── */
+      #roll-btn {
+        display: block;
+        width: 100%;
+        padding: 1.1rem;
+        border: none;
+        border-radius: 8px;
+        font-family: "DM Mono", monospace;
+        font-size: 0.8rem;
+        font-weight: 500;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          transform 0.08s;
+        margin-bottom: 1.8rem;
+      }
+      #roll-btn:active {
+        transform: scale(0.98);
+      }
+      #roll-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+      }
+
+      body[data-mode="food"] #roll-btn {
+        background: var(--food);
+        color: var(--bg);
+      }
+      body[data-mode="food"] #roll-btn:hover {
+        background: color-mix(in srgb, var(--food) 85%, white);
+      }
+      body[data-mode="place"] #roll-btn {
+        background: var(--place);
+        color: var(--bg);
+      }
+      body[data-mode="place"] #roll-btn:hover {
+        background: color-mix(in srgb, var(--place) 85%, white);
+      }
+
+      /* ── Result card ── */
+      #result-area {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.6rem 1.8rem;
+        margin-bottom: 1.8rem;
+      }
+
+      #result-name {
+        font-family: "Playfair Display", serif;
+        font-style: italic;
+        font-size: clamp(1.8rem, 5vw, 2.6rem);
+        line-height: 1.1;
+        margin-bottom: 0.7rem;
+      }
+
+      body[data-mode="food"] #result-name {
+        color: var(--food);
+      }
+      body[data-mode="place"] #result-name {
+        color: var(--place);
+      }
+
+      #result-name.rolling {
+        animation: flicker 0.07s infinite;
+      }
+      @keyframes flicker {
+        50% {
+          opacity: 0.35;
+        }
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 0.6rem;
+      }
+
+      .pill {
+        font-size: 0.6rem;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        padding: 0.25em 0.65em;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+
+      #result-notes {
+        font-size: 0.72rem;
+        color: var(--muted);
+        line-height: 1.5;
+        font-style: italic;
+      }
+
+      /* ── Secondary results ── */
+      #secondary-area {
+        margin-bottom: 2rem;
+      }
+
+      .card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.9rem 1.1rem;
+      }
+
+      .card-name {
+        font-family: "Playfair Display", serif;
+        font-style: italic;
+        font-size: 1.05rem;
+        margin-bottom: 0.35rem;
+      }
+      body[data-mode="food"] .card-name {
+        color: var(--place);
+      }
+      body[data-mode="place"] .card-name {
+        color: var(--food);
+      }
+
+      .card-notes {
+        font-size: 0.65rem;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-top: 0.3rem;
+      }
+
+      /* ── Browse list ── */
+      #browse-area {
+        margin-top: 2.5rem;
+        border-top: 1px solid var(--border);
+        padding-top: 1.5rem;
+      }
+
+      #browse-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-top: 0.7rem;
+      }
+
+      .browse-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.65rem 0.9rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition:
+          background 0.1s,
+          border-color 0.1s;
+        gap: 0.8rem;
+      }
+      .browse-row:hover {
+        background: var(--surface);
+        border-color: var(--muted);
+      }
+      .browse-row.dimmed {
+        opacity: 0.2;
+        pointer-events: none;
+      }
+
+      .browse-name {
+        font-family: "Playfair Display", serif;
+        font-style: italic;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+      }
+      body[data-mode="food"] .browse-name {
+        color: var(--food);
+      }
+      body[data-mode="place"] .browse-name {
+        color: var(--place);
+      }
+
+      .browse-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        justify-content: flex-end;
+      }
+
+      /* ── Misc ── */
+      #loading {
+        text-align: center;
+        padding: 3rem 0;
+        font-size: 0.72rem;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+      }
+
+      .empty-note {
+        font-size: 0.72rem;
+        color: var(--muted);
+        font-style: italic;
+        padding: 0.5rem 0;
+      }
+    </style>
+  </head>
+  <body data-mode="food">
+    <div class="wrap">
+      <header>
+        <h1>what do<br /><em>we eat</em></h1>
+        <div id="setup-banner" class="banner hidden">
+          ⚠ Set <code>SHEET_ID</code> in the script to your Google Sheet ID.<br />
+          Share the sheet:
+          <strong>Share → Anyone with the link → Viewer</strong>.<br />
+          Two tabs required, named exactly <code>foods</code> and
+          <code>places</code>.
+        </div>
+      </header>
+
+      <div id="loading">loading the menu...</div>
+
+      <div id="app" class="hidden">
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="food">🍜 food</button>
+          <button class="mode-btn" data-mode="place">📍 place</button>
+        </div>
+
+        <div id="tag-area">
+          <p class="section-label">
+            filter — tap once to include, twice to exclude
+          </p>
+          <div id="tag-buttons"></div>
+        </div>
+
+        <button id="roll-btn">roll</button>
+
+        <div id="result-area" class="hidden">
+          <div id="result-name"></div>
+          <div class="pill-row" id="result-tags"></div>
+          <div id="result-notes"></div>
+        </div>
+
+        <div id="secondary-area" class="hidden">
+          <p class="section-label" id="secondary-label"></p>
+          <div class="card-list" id="secondary-list"></div>
+        </div>
+
+        <div id="browse-area">
+          <p class="section-label">or pick one</p>
+          <div id="browse-list"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // ── CONFIG — replace this with your Sheet ID ───────────────────────────────
+      const SHEET_ID = "1BII1-rgfNT3utMeyjvkEFMYPvW_XSeC9l1RKdn_ReVs";
+      // ───────────────────────────────────────────────────────────────────────────
+
+      let foods = [],
+        places = [];
+      let mode = "food";
+      let tagState = {}; // tag -> 'include' | 'exclude' | undefined
+
+      // ── Data fetching ──────────────────────────────────────────────────────────
+
+      async function fetchTab(tabName) {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(tabName)}&tqx=out:json`;
+        const res = await fetch(url);
+        const text = await res.text();
+        const json = JSON.parse(
+          text.match(/setResponse\(([\s\S]*?)\);\s*$/)[1],
+        );
+        const { rows } = json.table;
+
+        return rows
+          .filter((r) => r.c && r.c.length > 0)
+          .map((r) => {
+            const obj = {};
+            // Force mapping by index to avoid header/label issues
+            for (let i = 0; i < 10; i++) {
+              obj[`col${i}`] = r.c[i] ? String(r.c[i].v ?? "").trim() : "";
+            }
+            return obj;
+          });
+      }
+
+      function splitTags(str) {
+        // If str is null, undefined, or not a string, return an empty array
+        if (!str || typeof str !== "string") return [];
+        return str
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
+      }
+
+      async function loadData() {
+        try {
+          const [foodRows, placeRows] = await Promise.all([
+            fetchTab("foods"),
+            fetchTab("places"),
+          ]);
+
+          // --- DEBUG BLOCK ---
+          console.log("Raw Food Columns (col0, col1, col2...):");
+          console.table(foodRows);
+          console.log("Raw Place Columns (col0, col1, col2...):");
+          console.table(placeRows);
+          // -------------------
+
+          // Foods: Col0=name, Col1=tags, Col2=place_ids
+          foods = foodRows
+            .filter((r) => {
+              const isHeader = r.col0.toLowerCase() === "name";
+              const hasName = r.col0.length > 0;
+              if (!hasName && !isHeader)
+                console.warn("Skipping food row (no name):", r);
+              return hasName && !isHeader;
+            })
+            .map((r) => ({
+              name: r.col0,
+              tags: splitTags(r.col1),
+              placeIds: splitTags(r.col2),
+            }));
+
+          // Places: Col0=id, Col1=name, Col2=tags, Col3=notes
+          places = placeRows
+            .filter((r) => {
+              const isHeader = r.col1.toLowerCase() === "name";
+              const hasName = r.col1.length > 0;
+              if (!hasName && !isHeader)
+                console.warn("Skipping place row (no name):", r);
+              return hasName && !isHeader;
+            })
+            .map((r) => ({
+              id: r.col0,
+              name: r.col1,
+              tags: splitTags(r.col2),
+              notes: r.col3,
+            }));
+
+          console.log("Final Processed Foods:", foods);
+          console.log("Final Processed Places:", places);
+        } catch (e) {
+          document.getElementById("loading").textContent =
+            "Error: " + e.message;
+          console.error("Mapping failed:", e);
+          return;
+        }
+
+        document.getElementById("loading").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        renderTagButtons();
+        renderBrowse();
+      }
+
+      // ── Filtering ──────────────────────────────────────────────────────────────
+
+      function allTags() {
+        const src = mode === "food" ? foods : places;
+        const set = new Set();
+        src.forEach((item) => item.tags.forEach((t) => set.add(t)));
+        return [...set].sort();
+      }
+
+      function activeItems() {
+        const src = mode === "food" ? foods : places;
+        return src.filter((item) => {
+          for (const [tag, state] of Object.entries(tagState)) {
+            if (state === "include" && !item.tags.includes(tag)) return false;
+            if (state === "exclude" && item.tags.includes(tag)) return false;
+          }
+          return true;
+        });
+      }
+
+      // ── Tag buttons ────────────────────────────────────────────────────────────
+
+      function renderTagButtons() {
+        const container = document.getElementById("tag-buttons");
+        container.innerHTML = "";
+        tagState = {};
+        allTags().forEach((tag) => {
+          const btn = document.createElement("button");
+          btn.className = "tag-btn";
+          btn.textContent = tag;
+          btn.dataset.tag = tag;
+          btn.addEventListener("click", () => {
+            const cur = tagState[tag];
+            if (!cur) tagState[tag] = "include";
+            else if (cur === "include") tagState[tag] = "exclude";
+            else delete tagState[tag];
+            updateTagButtons();
+            renderBrowse();
+          });
+          container.appendChild(btn);
+        });
+      }
+
+      function updateTagButtons() {
+        document.querySelectorAll(".tag-btn").forEach((btn) => {
+          const s = tagState[btn.dataset.tag];
+          btn.className = "tag-btn" + (s ? ` ${s}` : "");
+        });
+      }
+
+      // ── Roll animation ─────────────────────────────────────────────────────────
+
+      function rollAnimation(items, onDone) {
+        const nameEl = document.getElementById("result-name");
+        nameEl.classList.add("rolling");
+
+        const delays = Array.from(
+          { length: 22 },
+          (_, i) => 40 + Math.pow(i / 22, 2.5) * 300,
+        );
+
+        function step(idx) {
+          if (idx >= delays.length) {
+            nameEl.classList.remove("rolling");
+            onDone();
+            return;
+          }
+          nameEl.textContent =
+            items[Math.floor(Math.random() * items.length)].name;
+          setTimeout(() => step(idx + 1), delays[idx]);
+        }
+        step(0);
+      }
+
+      // ── Show result ────────────────────────────────────────────────────────────
+
+      function showResult(item) {
+        document.getElementById("result-area").classList.remove("hidden");
+        document.getElementById("result-name").textContent = item.name;
+        document.getElementById("result-tags").innerHTML = item.tags
+          .map((t) => `<span class="pill">${t}</span>`)
+          .join("");
+        document.getElementById("result-notes").textContent = item.notes || "";
+        renderSecondary(item);
+      }
+
+      function clearResult() {
+        document.getElementById("result-area").classList.add("hidden");
+        document.getElementById("secondary-area").classList.add("hidden");
+      }
+
+      function renderSecondary(item) {
+        const area = document.getElementById("secondary-area");
+        const label = document.getElementById("secondary-label");
+        const list = document.getElementById("secondary-list");
+        list.innerHTML = "";
+
+        let secondary = [];
+
+        if (mode === "food") {
+          secondary = places.filter((p) => item.placeIds.includes(p.id));
+          label.textContent = secondary.length
+            ? "places that do this"
+            : "no places listed for this food yet";
+        } else {
+          secondary = foods.filter((f) => f.placeIds.includes(item.id));
+          label.textContent = secondary.length
+            ? "food here"
+            : "no foods listed for this place yet";
+        }
+
+        secondary.forEach((s) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          const tags = s.tags
+            .map((t) => `<span class="pill">${t}</span>`)
+            .join("");
+          card.innerHTML = `
+            <div class="card-name">${s.name}</div>
+            <div class="pill-row">${tags}</div>
+            ${s.notes ? `<div class="card-notes">${s.notes}</div>` : ""}
+          `;
+          list.appendChild(card);
+        });
+
+        area.classList.remove("hidden");
+      }
+
+      // ── Browse list ────────────────────────────────────────────────────────────
+
+      function renderBrowse() {
+        const list = document.getElementById("browse-list");
+        const all = mode === "food" ? foods : places;
+        const active = activeItems();
+        list.innerHTML = "";
+
+        if (!all.length) {
+          list.innerHTML = `<p class="empty-note">nothing loaded yet</p>`;
+          return;
+        }
+        if (!active.length) {
+          list.innerHTML = `<p class="empty-note">no matches — loosen the filters</p>`;
+        }
+
+        all.forEach((item) => {
+          const isActive = active.includes(item);
+          const row = document.createElement("div");
+          row.className = "browse-row" + (isActive ? "" : " dimmed");
+          const tags = item.tags
+            .map((t) => `<span class="pill">${t}</span>`)
+            .join("");
+          row.innerHTML = `
+            <span class="browse-name">${item.name}</span>
+            <div class="browse-tags">${tags}</div>
+          `;
+          if (isActive) row.addEventListener("click", () => showResult(item));
+          list.appendChild(row);
+        });
+      }
+
+      // ── Roll button ────────────────────────────────────────────────────────────
+
+      document.getElementById("roll-btn").addEventListener("click", () => {
+        const items = activeItems();
+        if (!items.length) return;
+
+        const btn = document.getElementById("roll-btn");
+        btn.disabled = true;
+
+        document.getElementById("result-area").classList.remove("hidden");
+        document.getElementById("secondary-area").classList.add("hidden");
+        document.getElementById("result-tags").innerHTML = "";
+        document.getElementById("result-notes").textContent = "";
+
+        const picked = items[Math.floor(Math.random() * items.length)];
+
+        rollAnimation(items, () => {
+          showResult(picked);
+          btn.disabled = false;
+        });
+      });
+
+      // ── Mode toggle ────────────────────────────────────────────────────────────
+
+      document.querySelectorAll(".mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (btn.dataset.mode === mode) return;
+          mode = btn.dataset.mode;
+          document.body.dataset.mode = mode;
+          document
+            .querySelectorAll(".mode-btn")
+            .forEach((b) =>
+              b.classList.toggle("active", b.dataset.mode === mode),
+            );
+          clearResult();
+          tagState = {};
+          renderTagButtons();
+          renderBrowse();
+        });
+      });
+
+      // ── Init ───────────────────────────────────────────────────────────────────
+      document.body.dataset.mode = mode;
+      loadData();
+    </script>
+  </body>
+</html>
