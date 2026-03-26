@@ -338,6 +338,12 @@
         pointer-events: none;
       }
 
+      .browse-item.vetoed {
+        opacity: 0.3;
+        text-decoration: line-through;
+        filter: grayscale(1);
+      }
+
       .browse-name {
         font-family: "Playfair Display", serif;
         font-style: italic;
@@ -437,6 +443,27 @@
           <p class="section-label">or pick one</p>
           <div id="browse-list"></div>
         </div>
+        <footer
+          style="
+            margin-top: 4rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+          "
+        >
+          <a
+            href="https://docs.google.com/spreadsheets/d/1BII1-rgfNT3utMeyjvkEFMYPvW_XSeC9l1RKdn_ReVs/edit"
+            target="_blank"
+            style="
+              color: var(--muted);
+              font-size: 0.7rem;
+              text-decoration: none;
+              letter-spacing: 0.05em;
+            "
+          >
+            VIEW SOURCE SHEET ↗
+          </a>
+        </footer>
       </div>
     </div>
     <script>
@@ -699,16 +726,29 @@
         }
 
         all.forEach((item) => {
-          const isActive = active.includes(item);
+          const identifier = mode === "food" ? item.name : item.id;
+          const isVetoed = vetoedItems.has(identifier); // Check for veto
+          const isFiltered = active.includes(item);
+
+          // An item is only "fully active" if it's not filtered out AND not vetoed
+          const isActive = isFiltered && !isVetoed;
+
           const row = document.createElement("div");
-          row.className = "browse-row" + (isActive ? "" : " dimmed");
+          // Add a 'vetoed' class if applicable
+          row.className =
+            "browse-row" +
+            (isActive ? "" : " dimmed") +
+            (isVetoed ? " vetoed" : "");
+
           const tags = item.tags
             .map((t) => `<span class="pill">${t}</span>`)
             .join("");
+
           row.innerHTML = `
-            <span class="browse-name">${item.name}</span>
-            <div class="browse-tags">${tags}</div>
-          `;
+    <span class="browse-name">${item.name} ${isVetoed ? "(VETOED)" : ""}</span>
+    <div class="browse-tags">${tags}</div>
+  `;
+
           if (isActive) row.addEventListener("click", () => showResult(item));
           list.appendChild(row);
         });
