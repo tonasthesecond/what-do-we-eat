@@ -8,6 +8,7 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
       :root {
         --bg: #100e09;
@@ -408,6 +409,23 @@
           <div id="result-name"></div>
           <div class="pill-row" id="result-tags"></div>
           <div id="result-notes"></div>
+          <button
+            id="veto-btn"
+            style="
+              margin-top: 1rem;
+              background: transparent;
+              border: 1px solid var(--exclude);
+              color: var(--exclude);
+              padding: 0.5rem 1rem;
+              border-radius: 6px;
+              cursor: pointer;
+              font-family: &quot;DM Mono&quot;;
+              font-size: 0.7rem;
+              width: 100%;
+            "
+          >
+            VETO
+          </button>
         </div>
 
         <div id="secondary-area" class="hidden">
@@ -430,6 +448,7 @@
         places = [];
       let mode = "food";
       let tagState = {}; // tag -> 'include' | 'exclude' | undefined
+      let vetoedItems = new Set();
 
       // ── Data fetching ──────────────────────────────────────────────────────────
 
@@ -535,6 +554,11 @@
       function activeItems() {
         const src = mode === "food" ? foods : places;
         return src.filter((item) => {
+          // 1. Check if it's vetoed
+          const identifier = mode === "food" ? item.name : item.id;
+          if (vetoedItems.has(identifier)) return false;
+
+          // 2. Check tags (existing logic)
           for (const [tag, state] of Object.entries(tagState)) {
             if (state === "include" && !item.tags.includes(tag)) return false;
             if (state === "exclude" && item.tags.includes(tag)) return false;
@@ -561,6 +585,7 @@
             else delete tagState[tag];
             updateTagButtons();
             renderBrowse();
+            vetoedItems.clear();
           });
           container.appendChild(btn);
         });
@@ -607,6 +632,12 @@
           .join("");
         document.getElementById("result-notes").textContent = item.notes || "";
         renderSecondary(item);
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: [mode === "food" ? "#e8973a" : "#7ac4a8", "#ffffff"],
+        });
       }
 
       function clearResult() {
@@ -683,6 +714,24 @@
         });
       }
 
+      // ── Veto button ────────────────────────────────────────────────────────────
+      document.getElementById("veto-btn").addEventListener("click", () => {
+        const nameEl = document.getElementById("result-name");
+        const currentName = nameEl.textContent;
+
+        // Find the item to veto
+        const currentItem = activeItems().find((i) => i.name === currentName);
+        if (currentItem) {
+          const identifier =
+            mode === "food" ? currentItem.name : currentItem.id;
+          vetoedItems.add(identifier);
+
+          // Hide result and trigger a new roll
+          clearResult();
+          renderBrowse(); // Dim it in the list
+          document.getElementById("roll-btn").click();
+        }
+      });
       // ── Roll button ────────────────────────────────────────────────────────────
 
       document.getElementById("roll-btn").addEventListener("click", () => {
